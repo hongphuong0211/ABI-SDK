@@ -1,0 +1,21 @@
+{
+    "name": "ABILibsSDK.Editor",
+    "rootNamespace": "ABILibsSDK.Editor",
+    "references": [
+        "ABILibsSDK",
+        "MaxSdk.Scripts"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Firebase.App.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -1,0 +1,84 @@
+# =========================
+# Unity.gitignore cơ bản
+# =========================
+
+# --- Hệ điều hành ---
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# --- Git ---
+.gitignore.swp
+*.orig
+
+# --- Thư mục & file Unity sinh ra ---
+Library/
+Temp/
+Obj/
+Logs/
+UserSettings/
+MemoryCaptures/
+
+# Cache build & package
+Build/
+Builds/
+[Bb]uild*/
+[Ll]ogs/
+
+# Lightmap, GI, Shader cache
+LightmapSnapshot/
+*/Lightmap-*
+*/LightProbes-*
+*/ReflectionProbe-*
+
+# --- Asset Store & cache ---
+Assets/AssetStoreTools*
+.assetstore/
+
+# --- IDE / Editor ---
+.vs/
+.vscode/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.pidb
+*.user
+*.userprefs
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# Rider / JetBrains
+.idea/
+*.sln.iml
+
+# --- Logs & crash ---
+*.log
+*.stacktrace
+*.temp
+
+# --- Xcode / iOS ---
+xcuserdata/
+*.xcworkspace
+*.xccheckout
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+
+# --- Android / Gradle ---
+.gradle/
+*.gradle.*
+*/build/
+*/bin/
+local.properties
+
+# --- Các file tạm khác ---
+*.unitypackage
+*.apk
+*.aab
+

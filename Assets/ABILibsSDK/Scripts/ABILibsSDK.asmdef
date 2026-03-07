@@ -1,0 +1,23 @@
+{
+    "name": "ABILibsSDK",
+    "rootNamespace": "ABILibsSDK",
+    "references": [
+        "AppsFlyer",
+        "MaxSdk.Scripts"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Firebase.Analytics.dll",
+        "Firebase.App.dll",
+        "Firebase.RemoteConfig.dll",
+        "Firebase.Platform.dll",
+        "Firebase.TaskExtension.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -1,0 +1,36 @@
+pluginManagement {
+    repositories {
+        **ARTIFACTORYREPOSITORY**
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+    }
+}
+
+include ':launcher', ':unityLibrary'
+**INCLUDES**
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+    repositories {
+        **ARTIFACTORYREPOSITORY**
+        google()
+        mavenCentral()
+// Android Resolver Repos Start
+        def unityProjectPath = $/file:///**DIR_UNITYPROJECT**/$.replace("\\", "/")
+        maven {
+            url (unityProjectPath + "/Library/PackageCache/com.google.firebase.app@ed8e69ad13f3/Firebase/m2repository") // Packages/com.google.firebase.app/Firebase/Editor/AppDependencies.xml:22
+        }
+        maven {
+            url (unityProjectPath + "/Library/PackageCache/com.google.firebase.remote-config@2bfe83ec8e33/Firebase/m2repository") // Packages/com.google.firebase.remote-config/Firebase/Editor/RemoteConfigDependencies.xml:20
+        }
+        maven {
+            url (unityProjectPath + "/Library/PackageCache/com.google.firebase.analytics@3e4d59947a6c/Firebase/m2repository") // Packages/com.google.firebase.analytics/Firebase/Editor/AnalyticsDependencies.xml:18
+        }
+        mavenLocal()
+// Android Resolver Repos End
+        flatDir {
+            dirs "${project(':unityLibrary').projectDir}/libs"
+        }
+    }
+}
