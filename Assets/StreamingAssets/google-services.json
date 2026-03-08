@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1055937041674",
+    "project_id": "soft-kawaii",
+    "storage_bucket": "soft-kawaii.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1055937041674:android:f75d4e3369abdd524496f3",
+        "android_client_info": {
+          "package_name": "com.kawaii.sort.tidy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCmQaDevWC68DCOZvpBLjtHduySiRRzxOc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

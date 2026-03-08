@@ -17,9 +17,9 @@ MonoBehaviour:
   androidBannerAdUnitId:
   - eeewss
   androidInterstitialAdUnitId:
-  - 88455
+  - 787521302a124249
   androidRewardedAdUnitId:
-  - 88888
+  - f61a2c9067909c92
   androidAppOpenAdUnitId:
   - 555555
   iosBannerAdUnitId: []
@@ -34,6 +34,6 @@ MonoBehaviour:
   rewardedRetryAttempts: 3
   appOpenRetryAttempts: 3
   interstitialInterval: 30
-  autoLoadAds: 1
+  autoLoadAds: 0
   showAppOpenOnResume: 1
   adLoadCooldownTime: 2
