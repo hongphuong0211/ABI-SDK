@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace ABILibsSDK
 {
-    [CreateAssetMenu(fileName = "ABILibsSDKConfig", menuName = "ABILibsSDK/Config")]
+    [CreateAssetMenu(fileName = "ABILibsSDKConfig", menuName = "ABILibsSDK/ABILibsSDKConfig")]
     public class ABILibsSDKConfig : ScriptableObject
     {
         private const string RESOURCE_PATH = "ABILibsSDKConfig";

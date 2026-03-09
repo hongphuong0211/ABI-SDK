@@ -5,7 +5,7 @@ namespace ABILibsSDK.Editor
 {
     public static class ABILibsSDKEditor
     {
-        [MenuItem("ABILibsSDK/Create Config")]
+        [MenuItem("ABILibsSDK/Create SDK Config")]
         public static void CreateConfig()
         {
             var existing = Resources.Load<ABILibsSDKConfig>("ABILibsSDKConfig");
@@ -35,7 +35,7 @@ namespace ABILibsSDK.Editor
             ABILibsSDKConfig.DebugLog("Config created at " + path);
         }
 
-        [MenuItem("ABILibsSDK/Create SDK Prefab")]
+        [MenuItem("ABILibsSDK/Create ABILibsSDK Prefab")]
         public static void CreateSDKPrefab()
         {
             const string prefabPath = "Assets/ABILibsSDK/Prefabs/ABILibsSDK.prefab";
@@ -64,13 +64,38 @@ namespace ABILibsSDK.Editor
 
             ABILibsSDKConfig.DebugLog("SDK Prefab created at " + prefabPath);
         }
+        [MenuItem("ABILibsSDK/Create Custom Event Config")]
+        public static void CreateCustomEventConfig()
+        {
+            var existing = Resources.Load<ABILibsCustomEventConfig>("ABILibsCustomEventConfig");
+            if (existing != null)
+            {
+                EditorUtility.FocusProjectWindow();
+                Selection.activeObject = existing;
+                ABILibsSDKConfig.DebugLog("Custom Event Config already exists. Selecting it.");
+                return;
+            }
+            var config = ScriptableObject.CreateInstance<ABILibsCustomEventConfig>();
+            const string path = "Assets/ABILibsSDK/Resources";
+            if (!AssetDatabase.IsValidFolder(path))
+            {
+                AssetDatabase.CreateFolder("Assets/ABILibsSDK", "Resources");
+            }
+            AssetDatabase.CreateAsset(config, $"{path}/ABILibsCustomEventConfig.asset");
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            EditorUtility.FocusProjectWindow();
+            Selection.activeObject = config;
+            ABILibsSDKConfig.DebugLog("Custom Event Config created at " + path);
+        }
 
         [MenuItem("ABILibsSDK/Setup (Create All)")]
         public static void SetupAll()
         {
             CreateConfig();
             CreateSDKPrefab();
-            ABILibsSDKConfig.DebugLog("Setup complete! Fill in your SDK keys in the config.");
+            CreateCustomEventConfig();
+            ABILibsSDKConfig.DebugLog("Setup complete! Fill in your SDK keys in the config and custom event config.");
         }
     }
 }

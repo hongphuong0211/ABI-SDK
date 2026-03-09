@@ -166,6 +166,7 @@ namespace ABILibsSDK
             {
                 AppsFlyerManager.Instance.LogAdRevenue(adInfo);
             }
+            ABILibsCustomEvent.TROASEvent(adInfo.AdUnitIdentifier, adInfo);
         }
 
         private void CheckAllInitialized()
