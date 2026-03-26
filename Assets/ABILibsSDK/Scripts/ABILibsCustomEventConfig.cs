@@ -1,5 +1,11 @@
 using UnityEngine;
 using System;
+using System.Globalization;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+#if FIREBASE_REMOTE_CONFIG
+using Firebase.RemoteConfig;
+#endif
 namespace ABILibsSDK
 {
     [CreateAssetMenu(fileName = "ABILibsCustomEventConfig", menuName = "ABILibsSDK/CustomEventConfig")]
@@ -32,7 +38,24 @@ namespace ABILibsSDK
         [Header("Minimum Revenue Threshold for Banner and Mrec")]
         public float minRevenueThresholdForBannerAndMrec = 0.1f;
 
+        [Header("Remote Config Keys")]
+        public bool useFirebaseRemoteConfig = true;
+        public string keyBaseTROASPurchaeEventName = "abi_base_troas_purchase_event_name";
+        public string keyExchangeRates = "abi_exchange_rates";
+        public string keyBaseTROASEventName = "abi_base_troas_event_name";
+        public string keyBaseTROASEventName2 = "abi_base_troas_event_name_2";
+        public string keyBaseBambooAdEventName = "abi_base_bamboo_ad_event_name";
+        public string keyBaseBambooRewardedEventName = "abi_base_bamboo_rewarded_event_name";
+        public string keyMinRevenueThresholdForBannerAndMrec = "abi_min_revenue_threshold_banner_mrec";
+        public string keyTroasAdEvents = "abi_troas_ad_events";
+        public string keyTroasAdEvents2 = "abi_troas_ad_events_2";
+        public string keyBambooCountAdEvents = "abi_bamboo_count_ad_events";
+        public string keyBambooCountRewardedEvents = "abi_bamboo_count_rewarded_events";
+        public string keyTroasPurchaseEvents = "abi_troas_purchase_events";
+
         private static ABILibsCustomEventConfig _instance;
+        private bool _remoteConfigApplied;
+
         public static ABILibsCustomEventConfig Instance
         {
             get
@@ -46,10 +69,329 @@ namespace ABILibsSDK
                                        "Create one via Assets > Create > ABILibsSDK > Config and place it in a Resources folder.");
                     }
                 }
+
+                if (_instance != null && !_instance._remoteConfigApplied)
+                {
+                    _instance.ApplyFromActivatedRemoteConfig();
+                }
+
                 return _instance;
             }
         }
+
+#if FIREBASE_REMOTE_CONFIG
+        public async Task<bool> FetchAndApplyRemoteConfigAsync(TimeSpan? cacheExpiration = null)
+        {
+            if (!useFirebaseRemoteConfig)
+            {
+                return false;
+            }
+
+            var expiration = cacheExpiration ?? TimeSpan.FromHours(1);
+            await FirebaseRemoteConfig.DefaultInstance.FetchAsync(expiration);
+            await FirebaseRemoteConfig.DefaultInstance.ActivateAsync();
+            return ApplyFromActivatedRemoteConfig();
+        }
+#else
+        public Task<bool> FetchAndApplyRemoteConfigAsync(TimeSpan? cacheExpiration = null)
+        {
+            return Task.FromResult(false);
+        }
+#endif
+
+        public bool ApplyFromActivatedRemoteConfig()
+        {
+#if FIREBASE_REMOTE_CONFIG
+            if (!useFirebaseRemoteConfig)
+            {
+                _remoteConfigApplied = true;
+                return false;
+            }
+
+            bool changed = false;
+            changed |= TryApplyString(keyBaseTROASPurchaeEventName, value => baseTROASPurchaeEventName = value);
+            changed |= TryApplyString(keyExchangeRates, value => exchangeRates = value);
+            changed |= TryApplyString(keyBaseTROASEventName, value => baseTROASEventName = value);
+            changed |= TryApplyString(keyBaseTROASEventName2, value => baseTROASEventName2 = value);
+            changed |= TryApplyString(keyBaseBambooAdEventName, value => baseBambooAdEventName = value);
+            changed |= TryApplyString(keyBaseBambooRewardedEventName, value => baseBambooRewardedEventName = value);
+            changed |= TryApplyFloat(keyMinRevenueThresholdForBannerAndMrec, value => minRevenueThresholdForBannerAndMrec = value);
+            changed |= TryApplyFloatArray(keyTroasAdEvents, values => troasAdEvents = values);
+            changed |= TryApplyFloatArray(keyTroasAdEvents2, values => troasAdEvents2 = values);
+            changed |= TryApplyIntArray(keyBambooCountAdEvents, values => bambooCountAdEvents = values);
+            changed |= TryApplyIntArray(keyBambooCountRewardedEvents, values => bambooCountRewardedEvents = values);
+            changed |= TryApplyPurchaseEvents(keyTroasPurchaseEvents, values => troasPurchaseEvents = values);
+
+            _remoteConfigApplied = true;
+            return changed;
+#else
+            _remoteConfigApplied = true;
+            return false;
+#endif
+        }
+
+#if FIREBASE_REMOTE_CONFIG
+        private static bool TryApplyString(string key, Action<string> apply)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                return false;
+            }
+
+            string value = FirebaseRemoteConfig.DefaultInstance.GetValue(key).StringValue;
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return false;
+            }
+
+            apply(value);
+            return true;
+        }
+
+        private static bool TryApplyFloat(string key, Action<float> apply)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                return false;
+            }
+
+            string value = FirebaseRemoteConfig.DefaultInstance.GetValue(key).StringValue;
+            if (!float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out float parsed))
+            {
+                return false;
+            }
+
+            apply(parsed);
+            return true;
+        }
+
+        private static bool TryApplyFloatArray(string key, Action<float[]> apply)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                return false;
+            }
+
+            string value = FirebaseRemoteConfig.DefaultInstance.GetValue(key).StringValue;
+            if (TryParseFloatArray(value, out float[] parsed))
+            {
+                apply(parsed);
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool TryApplyIntArray(string key, Action<int[]> apply)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                return false;
+            }
+
+            string value = FirebaseRemoteConfig.DefaultInstance.GetValue(key).StringValue;
+            if (TryParseIntArray(value, out int[] parsed))
+            {
+                apply(parsed);
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool TryApplyPurchaseEvents(string key, Action<TROASPurchaseEvent[]> apply)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                return false;
+            }
+
+            string value = FirebaseRemoteConfig.DefaultInstance.GetValue(key).StringValue;
+            if (TryParsePurchaseEvents(value, out TROASPurchaseEvent[] parsed))
+            {
+                apply(parsed);
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool TryParseFloatArray(string input, out float[] result)
+        {
+            result = null;
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                return false;
+            }
+
+            if (TryParseJsonFloatArray(input, out result))
+            {
+                return result.Length > 0;
+            }
+
+            if (TryParseCsvFloatArray(input, out result))
+            {
+                return result.Length > 0;
+            }
+
+            return false;
+        }
+
+        private static bool TryParseIntArray(string input, out int[] result)
+        {
+            result = null;
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                return false;
+            }
+
+            if (TryParseJsonIntArray(input, out result))
+            {
+                return result.Length > 0;
+            }
+
+            if (TryParseCsvIntArray(input, out result))
+            {
+                return result.Length > 0;
+            }
+
+            return false;
+        }
+
+        private static bool TryParsePurchaseEvents(string input, out TROASPurchaseEvent[] result)
+        {
+            result = null;
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                return false;
+            }
+
+            // Expected format:
+            // {"items":[{"logCount":2,"minRange":0.99,"maxRange":4.99}]}
+            try
+            {
+                var wrapper = JsonUtility.FromJson<TROASPurchaseEventArrayWrapper>(input);
+                if (wrapper != null && wrapper.items != null && wrapper.items.Length > 0)
+                {
+                    result = wrapper.items;
+                    return true;
+                }
+            }
+            catch
+            {
+            }
+
+            return false;
+        }
+
+        private static bool TryParseJsonFloatArray(string input, out float[] result)
+        {
+            result = null;
+            try
+            {
+                var wrapper = JsonUtility.FromJson<FloatArrayWrapper>(input);
+                if (wrapper != null && wrapper.items != null)
+                {
+                    result = wrapper.items;
+                    return true;
+                }
+            }
+            catch
+            {
+            }
+
+            return false;
+        }
+
+        private static bool TryParseJsonIntArray(string input, out int[] result)
+        {
+            result = null;
+            try
+            {
+                var wrapper = JsonUtility.FromJson<IntArrayWrapper>(input);
+                if (wrapper != null && wrapper.items != null)
+                {
+                    result = wrapper.items;
+                    return true;
+                }
+            }
+            catch
+            {
+            }
+
+            return false;
+        }
+
+        private static bool TryParseCsvFloatArray(string input, out float[] result)
+        {
+            result = null;
+            string[] parts = input.Split(',');
+            var values = new List<float>(parts.Length);
+            for (int i = 0; i < parts.Length; i++)
+            {
+                string token = parts[i].Trim();
+                if (token.Length == 0)
+                {
+                    continue;
+                }
+
+                if (!float.TryParse(token, NumberStyles.Float, CultureInfo.InvariantCulture, out float parsed))
+                {
+                    return false;
+                }
+
+                values.Add(parsed);
+            }
+
+            result = values.ToArray();
+            return true;
+        }
+
+        private static bool TryParseCsvIntArray(string input, out int[] result)
+        {
+            result = null;
+            string[] parts = input.Split(',');
+            var values = new List<int>(parts.Length);
+            for (int i = 0; i < parts.Length; i++)
+            {
+                string token = parts[i].Trim();
+                if (token.Length == 0)
+                {
+                    continue;
+                }
+
+                if (!int.TryParse(token, NumberStyles.Integer, CultureInfo.InvariantCulture, out int parsed))
+                {
+                    return false;
+                }
+
+                values.Add(parsed);
+            }
+
+            result = values.ToArray();
+            return true;
+        }
+#endif
     }
+
+    [Serializable]
+    internal class FloatArrayWrapper
+    {
+        public float[] items;
+    }
+
+    [Serializable]
+    internal class IntArrayWrapper
+    {
+        public int[] items;
+    }
+
+    [Serializable]
+    internal class TROASPurchaseEventArrayWrapper
+    {
+        public TROASPurchaseEvent[] items;
+    }
+
     [Serializable]
     public class TROASPurchaseEvent
     {

@@ -18,6 +18,12 @@
     ],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "Firebase.RemoteConfig",
+            "expression": "0.0.0",
+            "define": "FIREBASE_REMOTE_CONFIG"
+        }
+    ],
     "noEngineReferences": false
 }

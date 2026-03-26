@@ -1,21 +1,40 @@
 {
   "project_info": {
-    "project_number": "1055937041674",
-    "project_id": "soft-kawaii",
-    "storage_bucket": "soft-kawaii.firebasestorage.app"
+    "project_number": "2972666537",
+    "project_id": "lib-ads",
+    "storage_bucket": "lib-ads.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1055937041674:android:f75d4e3369abdd524496f3",
+        "mobilesdk_app_id": "1:2972666537:android:bb3e60af28041d2b1077b8",
         "android_client_info": {
-          "package_name": "com.kawaii.sort.tidy"
+          "package_name": "com.abi.lib.ads"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCmQaDevWC68DCOZvpBLjtHduySiRRzxOc"
+          "current_key": "AIzaSyA2m4_gKaK42vLLgeCAYbTgcvYxhOcV2c4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:2972666537:android:80ad657c0e8f996e1077b8",
+        "android_client_info": {
+          "package_name": "com.abi.lib.ads.example"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA2m4_gKaK42vLLgeCAYbTgcvYxhOcV2c4"
         }
       ],
       "services": {

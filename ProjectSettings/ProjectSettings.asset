@@ -167,7 +167,7 @@ PlayerSettings:
   androidMinAspectRatio: 1
   applicationIdentifier:
     Android: com.kawaii.sort.tidy
-    Standalone: com.DefaultCompany.2DProject
+    Standalone: com.abi.lib.ads.example
   buildNumber:
     Standalone: 0
     VisionOS: 0

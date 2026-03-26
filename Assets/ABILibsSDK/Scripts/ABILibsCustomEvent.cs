@@ -124,7 +124,6 @@ namespace ABILibsSDK
                     parameters[0] = new Parameter("value", (double)eventVal);
                     parameters[1] = new Parameter("currency", "USD");
                     FirebaseAnalytics.LogEvent(ABILibsCustomEventConfig.Instance.baseBambooAdEventName + i.ToString(), parameters);
-                    PlayerPrefs.SetFloat(PREFIX_LAST_SEND_EVENT_CACHE_BAMBOO + i, cacheRevenue);
                 }
             }
         }
@@ -156,7 +155,6 @@ namespace ABILibsSDK
                     parameters[0] = new Parameter("value", (double)eventVal);
                     parameters[1] = new Parameter("currency", "USD");
                     FirebaseAnalytics.LogEvent(ABILibsCustomEventConfig.Instance.baseBambooRewardedEventName + i.ToString(), parameters);
-                    PlayerPrefs.SetFloat(PREFIX_LAST_SEND_EVENT_CACHE_BAMBOO_REWARDED + i, cacheRevenue);
                 }
             }
         }
@@ -166,7 +164,8 @@ namespace ABILibsSDK
         public static void TROASPurchaseEvent(string productId, float price, string currency)
         {
             if (ABILibsCustomEventConfig.Instance == null) return;
-            double priceInUSD = price * GetExchangeRate(currency);
+            double exchangeRate = GetExchangeRate(currency);
+            double priceInUSD = exchangeRate > 0 ? price / exchangeRate : price;
             for (int i = 0; i < ABILibsCustomEventConfig.Instance.troasPurchaseEvents.Length; i++)
             {
                 if (priceInUSD >= ABILibsCustomEventConfig.Instance.troasPurchaseEvents[i].minRange && priceInUSD <= ABILibsCustomEventConfig.Instance.troasPurchaseEvents[i].maxRange)
