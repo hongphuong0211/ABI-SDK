@@ -9,9 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 83c2aa08162c04a218039c229ca24206, type: 3}
+  m_Script: {fileID: 11500000, guid: c8a91f2e3d4b5a60718293e4d5f6a70b, type: 3}
   m_Name: ABILibsCustomEventConfig
-  m_EditorClassIdentifier: ABILibsSDK::ABILibsSDK.ABILibsCustomEventConfig
+  m_EditorClassIdentifier: ABILibsSDK.CustomEvents::ABILibsSDK.ABILibsCustomEventConfig
   baseTROASPurchaeEventName: rise_iap
   troasPurchaseEvents:
   - logCount: 1

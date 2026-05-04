@@ -3,6 +3,7 @@
     "rootNamespace": "ABILibsSDK.Editor",
     "references": [
         "ABILibsSDK",
+        "ABILibsSDK.CustomEvents",
         "MaxSdk.Scripts"
     ],
     "includePlatforms": [

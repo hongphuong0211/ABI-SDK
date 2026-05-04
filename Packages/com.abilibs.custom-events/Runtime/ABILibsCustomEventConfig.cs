@@ -66,7 +66,7 @@ namespace ABILibsSDK
                     if (_instance == null)
                     {
                         Debug.LogError($"[ABILibsSDK] Config not found at Resources/{RESOURCE_PATH}. " +
-                                       "Create one via Assets > Create > ABILibsSDK > Config and place it in a Resources folder.");
+                                       "Create one via Assets > Create > ABILibsSDK > CustomEventConfig and place it in a Resources folder (any folder named Resources, including inside a package).");
                     }
                 }
 

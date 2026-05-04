@@ -1,0 +1,22 @@
+{
+  "name": "com.abilibs.custom-events",
+  "version": "1.0.0",
+  "displayName": "ABI Libs Custom Events",
+  "description": "TROAS/Bamboo Firebase Analytics helpers with AppLovin MAX ad callbacks, main-thread dispatch, and optional Firebase Remote Config overrides. Requires Firebase Analytics, AppLovin MAX Unity plugin, and (optional) Firebase Remote Config in the host project.",
+  "unity": "2022.3",
+  "keywords": [
+    "firebase",
+    "analytics",
+    "troas",
+    "applovin",
+    "max"
+  ],
+  "author": {
+    "name": "ABI Libs SDK"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hongphuong0211/ABI-SDK.git",
+    "directory": "Packages/com.abilibs.custom-events"
+  }
+}

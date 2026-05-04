@@ -1,5 +1,11 @@
 {
   "dependencies": {
+    "com.abilibs.custom-events": {
+      "version": "file:com.abilibs.custom-events",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
     "com.boxqkrtm.ide.cursor": {
       "version": "https://github.com/boxqkrtm/com.unity.ide.cursor.git",
       "depth": 0,
@@ -41,7 +47,7 @@
       }
     },
     "com.unity.timeline": {
-      "version": "1.8.10",
+      "version": "1.8.11",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -62,7 +68,7 @@
       }
     },
     "com.unity.visualscripting": {
-      "version": "1.9.9",
+      "version": "1.9.10",
       "depth": 0,
       "source": "registry",
       "dependencies": {

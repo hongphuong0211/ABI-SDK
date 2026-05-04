@@ -13,9 +13,16 @@ namespace ABILibsSDK
         private const string IS_FIRST_TIME_CACHE_KEY = "[ABILibsSDK]is_first_time_cache_";
         public static void TROASEvent(string adUnitId, MaxSdkBase.AdInfo adInfo)
         {
+            double impressionRevenue = adInfo.Revenue;
+            string snapshotFormat = adInfo.AdFormat != null ? adInfo.AdFormat.ToLowerInvariant() : string.Empty;
+            MainThreadDispatcher.RunOnMainThread(() => TROASEventOnMainThread(impressionRevenue, snapshotFormat));
+        }
+
+        private static void TROASEventOnMainThread(double impressionRevenue, string adFormatLower)
+        {
             if (ABILibsCustomEventConfig.Instance == null) return;
-            double revenue = adInfo.Revenue;
-            if (adInfo.AdFormat.ToLower() == "banner" || adInfo.AdFormat.ToLower() == "mrec")
+            double revenue = impressionRevenue;
+            if (adFormatLower == "banner" || adFormatLower == "mrec")
             {
                 // With Banner and Mrec, we should track until revenue reach the min threshold
                 float troasCacheBanner = PlayerPrefs.GetFloat(TROAS_CACHE_KEY_BANNER, 0);
@@ -40,7 +47,7 @@ namespace ABILibsSDK
                 if (currentTroasCache >= ABILibsCustomEventConfig.Instance.troasAdEvents[i])
                 {
                     bool isFirstTimeCache = PlayerPrefs.GetInt(IS_FIRST_TIME_CACHE_KEY + i, 0) == 0;
-                    float eventVal = (float)adInfo.Revenue;
+                    float eventVal = (float)impressionRevenue;
                     if (isFirstTimeCache)
                     {
                         eventVal = currentTroasCache;
@@ -57,9 +64,16 @@ namespace ABILibsSDK
         private const string PREFIX_LAST_SEND_EVENT_CACHE_2 = "[ABILibsSDK]last_send_event_cache_2_";
         public static void TROASEvent2(string adUnitId, MaxSdkBase.AdInfo adInfo)
         {
+            double impressionRevenue = adInfo.Revenue;
+            string snapshotFormat = adInfo.AdFormat != null ? adInfo.AdFormat.ToLowerInvariant() : string.Empty;
+            MainThreadDispatcher.RunOnMainThread(() => TROASEvent2OnMainThread(impressionRevenue, snapshotFormat));
+        }
+
+        private static void TROASEvent2OnMainThread(double impressionRevenue, string adFormatLower)
+        {
             if (ABILibsCustomEventConfig.Instance == null) return;
-            double revenue = adInfo.Revenue;
-            if (adInfo.AdFormat.ToLower() == "banner" || adInfo.AdFormat.ToLower() == "mrec")
+            double revenue = impressionRevenue;
+            if (adFormatLower == "banner" || adFormatLower == "mrec")
             {
                 // With Banner and Mrec, we should track until revenue reach the min threshold
                 float troasCacheBanner = PlayerPrefs.GetFloat(TROAS_CACHE_KEY_BANNER, 0);
@@ -101,6 +115,12 @@ namespace ABILibsSDK
         private const string PREFIX_LAST_SEND_EVENT_CACHE_BAMBOO = "[ABILibsSDK]last_send_event_cache_bamboo_";
         public static void BambooAdEvent(string adUnitId, MaxSdkBase.AdInfo adInfo)
         {
+            double impressionRevenue = adInfo.Revenue;
+            MainThreadDispatcher.RunOnMainThread(() => BambooAdEventOnMainThread(impressionRevenue));
+        }
+
+        private static void BambooAdEventOnMainThread(double impressionRevenue)
+        {
             if (ABILibsCustomEventConfig.Instance == null) return;
             int bambooCount = PlayerPrefs.GetInt(BAMBOO_COUNT_CACHE_KEY, 0);
             bambooCount++;
@@ -109,11 +129,11 @@ namespace ABILibsSDK
             for (int i = 0; i < ABILibsCustomEventConfig.Instance.bambooCountAdEvents.Length; i++)
             {
                 float cacheRevenue = PlayerPrefs.GetFloat(PREFIX_CACHE_REVENUE_BAMBOO + i, 0);
-                cacheRevenue += (float)adInfo.Revenue;
+                cacheRevenue += (float)impressionRevenue;
                 PlayerPrefs.SetFloat(PREFIX_CACHE_REVENUE_BAMBOO + i, cacheRevenue);
                 if (bambooCount >= ABILibsCustomEventConfig.Instance.bambooCountAdEvents[i])
                 {
-                    float eventVal = (float)adInfo.Revenue;
+                    float eventVal = (float)impressionRevenue;
                     bool isFirstTimeCache = PlayerPrefs.GetInt(PREFIX_LAST_SEND_EVENT_CACHE_BAMBOO + i, 0) == 0;
                     if (isFirstTimeCache)
                     {
@@ -132,6 +152,12 @@ namespace ABILibsSDK
         private const string PREFIX_LAST_SEND_EVENT_CACHE_BAMBOO_REWARDED = "[ABILibsSDK]last_send_event_cache_bamboo_rewarded_";
         public static void BambooRewardedEvent(string adUnitId, MaxSdkBase.AdInfo adInfo)
         {
+            double impressionRevenue = adInfo.Revenue;
+            MainThreadDispatcher.RunOnMainThread(() => BambooRewardedEventOnMainThread(impressionRevenue));
+        }
+
+        private static void BambooRewardedEventOnMainThread(double impressionRevenue)
+        {
             if (ABILibsCustomEventConfig.Instance == null) return;
             int bambooCount = PlayerPrefs.GetInt(BAMBOO_COUNT_CACHE_KEY_REWARDED, 0);
             bambooCount++;
@@ -140,11 +166,11 @@ namespace ABILibsSDK
             for (int i = 0; i < ABILibsCustomEventConfig.Instance.bambooCountRewardedEvents.Length; i++)
             {
                 float cacheRevenue = PlayerPrefs.GetFloat(PREFIX_CACHE_REVENUE_BAMBOO_REWARDED + i, 0);
-                cacheRevenue += (float)adInfo.Revenue;
+                cacheRevenue += (float)impressionRevenue;
                 PlayerPrefs.SetFloat(PREFIX_CACHE_REVENUE_BAMBOO_REWARDED + i, cacheRevenue);
                 if (bambooCount >= ABILibsCustomEventConfig.Instance.bambooCountRewardedEvents[i])
                 {
-                    float eventVal = (float)adInfo.Revenue;
+                    float eventVal = (float)impressionRevenue;
                     bool isFirstTimeCache = PlayerPrefs.GetInt(PREFIX_LAST_SEND_EVENT_CACHE_BAMBOO_REWARDED + i, 0) == 0;
                     if (isFirstTimeCache)
                     {
@@ -162,6 +188,12 @@ namespace ABILibsSDK
 
         #region  Purchase Event
         public static void TROASPurchaseEvent(string productId, float price, string currency)
+        {
+            string currencySnapshot = currency;
+            MainThreadDispatcher.RunOnMainThread(() => TROASPurchaseEventOnMainThread(productId, price, currencySnapshot));
+        }
+
+        private static void TROASPurchaseEventOnMainThread(string productId, float price, string currency)
         {
             if (ABILibsCustomEventConfig.Instance == null) return;
             double exchangeRate = GetExchangeRate(currency);
@@ -206,14 +238,18 @@ namespace ABILibsSDK
         #endregion
         public static void LogEvent(string eventName, Dictionary<string, string> parameters)
         {
-            var parametersArray = new Parameter[parameters.Count];
-            int i = 0;
-            foreach (var parameter in parameters)
+            var snapshot = parameters != null ? new Dictionary<string, string>(parameters) : new Dictionary<string, string>();
+            MainThreadDispatcher.RunOnMainThread(() =>
             {
-                parametersArray[i] = new Parameter(parameter.Key, parameter.Value);
-                i++;
-            }
-            FirebaseAnalytics.LogEvent(eventName, parametersArray);
+                var parametersArray = new Parameter[snapshot.Count];
+                int i = 0;
+                foreach (var parameter in snapshot)
+                {
+                    parametersArray[i] = new Parameter(parameter.Key, parameter.Value);
+                    i++;
+                }
+                FirebaseAnalytics.LogEvent(eventName, parametersArray);
+            });
         }
     }
 }
