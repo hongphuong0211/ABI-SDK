@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Networking;
 using System;
 using System.Globalization;
 using System.Threading.Tasks;
@@ -38,20 +39,26 @@ namespace ABILibsSDK
         [Header("Minimum Revenue Threshold for Banner and Mrec")]
         public float minRevenueThresholdForBannerAndMrec = 0.1f;
 
-        [Header("Remote Config Keys")]
-        public bool useFirebaseRemoteConfig = true;
-        public string keyBaseTROASPurchaeEventName = "abi_base_troas_purchase_event_name";
-        public string keyExchangeRates = "abi_exchange_rates";
-        public string keyBaseTROASEventName = "abi_base_troas_event_name";
-        public string keyBaseTROASEventName2 = "abi_base_troas_event_name_2";
-        public string keyBaseBambooAdEventName = "abi_base_bamboo_ad_event_name";
-        public string keyBaseBambooRewardedEventName = "abi_base_bamboo_rewarded_event_name";
-        public string keyMinRevenueThresholdForBannerAndMrec = "abi_min_revenue_threshold_banner_mrec";
-        public string keyTroasAdEvents = "abi_troas_ad_events";
-        public string keyTroasAdEvents2 = "abi_troas_ad_events_2";
-        public string keyBambooCountAdEvents = "abi_bamboo_count_ad_events";
-        public string keyBambooCountRewardedEvents = "abi_bamboo_count_rewarded_events";
-        public string keyTroasPurchaseEvents = "abi_troas_purchase_events";
+        /// <summary>HTTP portal + Firebase Remote Config key names — fixed in code (not serialized, not overridable from Inspector/JSON).</summary>
+        public static readonly bool UseHttpRemoteConfig = true;
+        public const string HttpConfigBaseUrl = "https://config.abigames.com.vn";
+        public const string HttpConfigPath = "/api/v1/config";
+        public const string HttpConfigApiKey = "";
+        public const string HttpAppIdentifierOverride = "";
+
+        public static readonly bool UseFirebaseRemoteConfig = true;
+        public const string KeyBaseTROASPurchaeEventName = "abi_base_troas_purchase_event_name";
+        public const string KeyExchangeRates = "abi_exchange_rates";
+        public const string KeyBaseTROASEventName = "abi_base_troas_event_name";
+        public const string KeyBaseTROASEventName2 = "abi_base_troas_event_name_2";
+        public const string KeyBaseBambooAdEventName = "abi_base_bamboo_ad_event_name";
+        public const string KeyBaseBambooRewardedEventName = "abi_base_bamboo_rewarded_event_name";
+        public const string KeyMinRevenueThresholdForBannerAndMrec = "abi_min_revenue_threshold_banner_mrec";
+        public const string KeyTroasAdEvents = "abi_troas_ad_events";
+        public const string KeyTroasAdEvents2 = "abi_troas_ad_events_2";
+        public const string KeyBambooCountAdEvents = "abi_bamboo_count_ad_events";
+        public const string KeyBambooCountRewardedEvents = "abi_bamboo_count_rewarded_events";
+        public const string KeyTroasPurchaseEvents = "abi_troas_purchase_events";
 
         private static ABILibsCustomEventConfig _instance;
         private bool _remoteConfigApplied;
@@ -82,7 +89,7 @@ namespace ABILibsSDK
 #if FIREBASE_REMOTE_CONFIG
         public async Task<bool> FetchAndApplyRemoteConfigAsync(TimeSpan? cacheExpiration = null)
         {
-            if (!useFirebaseRemoteConfig)
+            if (!UseFirebaseRemoteConfig)
             {
                 return false;
             }
@@ -99,28 +106,150 @@ namespace ABILibsSDK
         }
 #endif
 
+        /// <summary>
+        /// Loads config JSON from the portal (GET with query country + appId).
+        /// appIdentifier: Android package name, iOS bundle id, or iOS App Store id string — must match a game on the server.
+        /// Pass null/empty to use Application.identifier as appId.
+        /// </summary>
+        public async Task<bool> FetchAndApplyHttpAsync(string country, string appIdentifier = null, int timeoutSeconds = 30)
+        {
+            if (!UseHttpRemoteConfig)
+            {
+                return false;
+            }
+
+            string appId = !string.IsNullOrWhiteSpace(appIdentifier)
+                ? appIdentifier.Trim()
+                : (!string.IsNullOrWhiteSpace(HttpAppIdentifierOverride) ? HttpAppIdentifierOverride.Trim() : Application.identifier);
+
+            if (string.IsNullOrWhiteSpace(appId))
+            {
+                Debug.LogError("[ABILibsCustomEventConfig] appId is empty; pass appIdentifier or set a valid Application.identifier.");
+                return false;
+            }
+
+            string cc = NormalizeCountryCode(country);
+            if (cc == null)
+            {
+                Debug.LogError("[ABILibsCustomEventConfig] country is invalid; use a 2-letter ISO code (e.g. US, VN).");
+                return false;
+            }
+
+            string baseUrl = HttpConfigBaseUrl.TrimEnd('/');
+            string path = string.IsNullOrWhiteSpace(HttpConfigPath) ? "/api/v1/config" : HttpConfigPath;
+            if (!path.StartsWith("/", StringComparison.Ordinal))
+            {
+                path = "/" + path;
+            }
+
+            string url = $"{baseUrl}{path}?country={UnityWebRequest.EscapeURL(cc)}&appId={UnityWebRequest.EscapeURL(appId)}";
+            using (var req = UnityWebRequest.Get(url))
+            {
+                req.timeout = timeoutSeconds;
+                if (!string.IsNullOrWhiteSpace(HttpConfigApiKey))
+                {
+                    req.SetRequestHeader("X-ABILibs-Config-Key", HttpConfigApiKey.Trim());
+                }
+
+                var op = req.SendWebRequest();
+                while (!op.isDone)
+                {
+                    await Task.Yield();
+                }
+
+#if UNITY_2020_1_OR_NEWER
+                if (req.result != UnityWebRequest.Result.Success)
+#else
+                if (req.isNetworkError || req.isHttpError)
+#endif
+                {
+                    Debug.LogError($"[ABILibsCustomEventConfig] HTTP config failed: {req.error} ({req.responseCode}) body: {req.downloadHandler?.text}");
+                    return false;
+                }
+
+                string json = req.downloadHandler?.text;
+                if (string.IsNullOrWhiteSpace(json))
+                {
+                    Debug.LogError("[ABILibsCustomEventConfig] HTTP config returned empty body.");
+                    return false;
+                }
+
+                return ApplyFromJsonString(json.Trim());
+            }
+        }
+
+        private static string NormalizeCountryCode(string country)
+        {
+            if (string.IsNullOrWhiteSpace(country))
+            {
+                return null;
+            }
+
+            string c = country.Trim();
+            if (c.Length == 2)
+            {
+                return c.ToUpperInvariant();
+            }
+
+            try
+            {
+                var region = new RegionInfo(c);
+                return region.TwoLetterISORegionName;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Applies JSON matching this ScriptableObject's serialized fields (same shape as JsonUtility export).
+        /// </summary>
+        public bool ApplyFromJsonString(string json)
+        {
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return false;
+            }
+
+            try
+            {
+                JsonUtility.FromJsonOverwrite(json.Trim(), this);
+                _remoteConfigApplied = true;
+#if UNITY_EDITOR
+                UnityEditor.EditorUtility.SetDirty(this);
+#endif
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[ABILibsCustomEventConfig] ApplyFromJsonString failed: {ex.Message}");
+                return false;
+            }
+        }
+
         public bool ApplyFromActivatedRemoteConfig()
         {
 #if FIREBASE_REMOTE_CONFIG
-            if (!useFirebaseRemoteConfig)
+            if (!UseFirebaseRemoteConfig)
             {
                 _remoteConfigApplied = true;
                 return false;
             }
 
             bool changed = false;
-            changed |= TryApplyString(keyBaseTROASPurchaeEventName, value => baseTROASPurchaeEventName = value);
-            changed |= TryApplyString(keyExchangeRates, value => exchangeRates = value);
-            changed |= TryApplyString(keyBaseTROASEventName, value => baseTROASEventName = value);
-            changed |= TryApplyString(keyBaseTROASEventName2, value => baseTROASEventName2 = value);
-            changed |= TryApplyString(keyBaseBambooAdEventName, value => baseBambooAdEventName = value);
-            changed |= TryApplyString(keyBaseBambooRewardedEventName, value => baseBambooRewardedEventName = value);
-            changed |= TryApplyFloat(keyMinRevenueThresholdForBannerAndMrec, value => minRevenueThresholdForBannerAndMrec = value);
-            changed |= TryApplyFloatArray(keyTroasAdEvents, values => troasAdEvents = values);
-            changed |= TryApplyFloatArray(keyTroasAdEvents2, values => troasAdEvents2 = values);
-            changed |= TryApplyIntArray(keyBambooCountAdEvents, values => bambooCountAdEvents = values);
-            changed |= TryApplyIntArray(keyBambooCountRewardedEvents, values => bambooCountRewardedEvents = values);
-            changed |= TryApplyPurchaseEvents(keyTroasPurchaseEvents, values => troasPurchaseEvents = values);
+            changed |= TryApplyString(KeyBaseTROASPurchaeEventName, value => baseTROASPurchaeEventName = value);
+            changed |= TryApplyString(KeyExchangeRates, value => exchangeRates = value);
+            changed |= TryApplyString(KeyBaseTROASEventName, value => baseTROASEventName = value);
+            changed |= TryApplyString(KeyBaseTROASEventName2, value => baseTROASEventName2 = value);
+            changed |= TryApplyString(KeyBaseBambooAdEventName, value => baseBambooAdEventName = value);
+            changed |= TryApplyString(KeyBaseBambooRewardedEventName, value => baseBambooRewardedEventName = value);
+            changed |= TryApplyFloat(KeyMinRevenueThresholdForBannerAndMrec, value => minRevenueThresholdForBannerAndMrec = value);
+            changed |= TryApplyFloatArray(KeyTroasAdEvents, values => troasAdEvents = values);
+            changed |= TryApplyFloatArray(KeyTroasAdEvents2, values => troasAdEvents2 = values);
+            changed |= TryApplyIntArray(KeyBambooCountAdEvents, values => bambooCountAdEvents = values);
+            changed |= TryApplyIntArray(KeyBambooCountRewardedEvents, values => bambooCountRewardedEvents = values);
+            changed |= TryApplyPurchaseEvents(KeyTroasPurchaseEvents, values => troasPurchaseEvents = values);
 
             _remoteConfigApplied = true;
             return changed;
@@ -129,7 +258,27 @@ namespace ABILibsSDK
             return false;
 #endif
         }
+        [ContextMenu("Export to Json")]
+        private void ExportToJson()
+        {
+            string json = JsonUtility.ToJson(this);
+            Debug.Log(json);
+            GUIUtility.systemCopyBuffer = json;
+        }
+        [ContextMenu("Apply From Json in clipboard")]
+        private void ApplyFromJsonInClipboard()
+        {
+            string json = GUIUtility.systemCopyBuffer;
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return;
+            }
 
+            if (ApplyFromJsonString(json.Trim()))
+            {
+                Debug.Log("Applied from clipboard");
+            }
+        }
 #if FIREBASE_REMOTE_CONFIG
         private static bool TryApplyString(string key, Action<string> apply)
         {
