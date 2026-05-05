@@ -75,16 +75,3 @@ MonoBehaviour:
   baseBambooRewardedEventName: abi_sdk2_watch_rewarded_ad_
   bambooCountRewardedEvents: 050000000a0000000f000000
   minRevenueThresholdForBannerAndMrec: 0.1
-  useFirebaseRemoteConfig: 1
-  keyBaseTROASPurchaeEventName: abi_base_troas_purchase_event_name
-  keyExchangeRates: abi_exchange_rates
-  keyBaseTROASEventName: abi_base_troas_event_name
-  keyBaseTROASEventName2: abi_base_troas_event_name_2
-  keyBaseBambooAdEventName: abi_base_bamboo_ad_event_name
-  keyBaseBambooRewardedEventName: abi_base_bamboo_rewarded_event_name
-  keyMinRevenueThresholdForBannerAndMrec: abi_min_revenue_threshold_banner_mrec
-  keyTroasAdEvents: abi_troas_ad_events
-  keyTroasAdEvents2: abi_troas_ad_events_2
-  keyBambooCountAdEvents: abi_bamboo_count_ad_events
-  keyBambooCountRewardedEvents: abi_bamboo_count_rewarded_events
-  keyTroasPurchaseEvents: abi_troas_purchase_events
