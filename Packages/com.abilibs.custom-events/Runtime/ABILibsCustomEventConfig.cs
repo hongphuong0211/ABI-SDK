@@ -46,7 +46,11 @@ namespace ABILibsSDK
         public const string HttpConfigApiKey = "";
         public const string HttpAppIdentifierOverride = "";
 
-        public static readonly bool UseFirebaseRemoteConfig = true;
+        /// <summary>When false (default), <see cref="Instance"/> uses asset defaults until <see cref="FetchAndApplyHttpAsync"/> applies JSON. Set true to read overrides from Firebase Remote Config on first access / via <see cref="FetchAndApplyRemoteConfigAsync"/>.</summary>
+        public static readonly bool UseFirebaseRemoteConfig = false;
+
+        /// <summary>When true (default), automatically calls <see cref="FetchAndApplyHttpAsync"/> once at startup using the device region (<see cref="RegionInfo.CurrentRegion"/>). Set false if you call <see cref="FetchAndApplyHttpAsync"/> yourself (e.g. country from SIM or backend).</summary>
+        public static readonly bool AutoFetchHttpConfigOnStartup = true;
         public const string KeyBaseTROASPurchaeEventName = "abi_base_troas_purchase_event_name";
         public const string KeyExchangeRates = "abi_exchange_rates";
         public const string KeyBaseTROASEventName = "abi_base_troas_event_name";
@@ -83,6 +87,58 @@ namespace ABILibsSDK
                 }
 
                 return _instance;
+            }
+        }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void AutoFetchHttpConfigOnLoad()
+        {
+            if (!UseHttpRemoteConfig || !AutoFetchHttpConfigOnStartup)
+            {
+                return;
+            }
+
+            StartAutoHttpFetch();
+        }
+
+        private static async void StartAutoHttpFetch()
+        {
+            try
+            {
+                var cfg = Instance;
+                if (cfg == null)
+                {
+                    return;
+                }
+
+                string country = TryGetDeviceRegionCountryCode();
+                if (string.IsNullOrEmpty(country))
+                {
+                    Debug.LogWarning("[ABILibsCustomEventConfig] Auto HTTP config skipped: could not resolve device region country code.");
+                    return;
+                }
+
+                await cfg.FetchAndApplyHttpAsync(country);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[ABILibsCustomEventConfig] Auto HTTP config failed: {ex.Message}");
+            }
+        }
+
+        private static string TryGetDeviceRegionCountryCode()
+        {
+            try
+            {
+                return RegionInfo.CurrentRegion.TwoLetterISORegionName;
+            }
+            catch (ArgumentException)
+            {
+                return null;
+            }
+            catch (Exception)
+            {
+                return null;
             }
         }
 
