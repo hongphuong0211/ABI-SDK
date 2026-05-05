@@ -5,12 +5,27 @@ using System.Text.RegularExpressions;
 using UnityEngine;
 namespace ABILibsSDK
 {
+    /// <summary>
+    /// Entry points for Firebase Analytics custom events used in TROAS / Bamboo / purchase flows.
+    /// All public methods marshal work to the Unity main thread; safe to call from AppLovin MAX callbacks or background threads.
+    /// Requires <see cref="ABILibsCustomEventConfig.Instance"/> to be initialized; otherwise calls no-op.
+    /// </summary>
     public class ABILibsCustomEvent
     {
         #region  TROAS Ad Event
         private const string TROAS_CACHE_KEY_BANNER = "[ABILibsSDK]troas_cache_banner";
         private const string TROAS_CACHE_KEY = "[ABILibsSDK]troas_cache";
         private const string IS_FIRST_TIME_CACHE_KEY = "[ABILibsSDK]is_first_time_cache_";
+        /// <summary>
+        /// Records ad impression revenue for TROAS-style tiered events (cumulative cache + first-hit semantics).
+        /// </summary>
+        /// <param name="adUnitId">Ad unit identifier from MAX (passed through for API symmetry; not used in current implementation).</param>
+        /// <param name="adInfo">MAX ad info; <see cref="MaxSdkBase.AdInfo.Revenue"/> and <see cref="MaxSdkBase.AdInfo.AdFormat"/> are read on the calling thread then applied on the main thread.</param>
+        /// <remarks>
+        /// Banner/MREC: revenue is accumulated until it exceeds <c>minRevenueThresholdForBannerAndMrec</c>, then flushed.
+        /// Other formats: revenue is added to a shared cache. When cache crosses thresholds in <c>troasAdEvents</c>,
+        /// Firebase events named <c>baseTROASEventName</c> + index are logged with parameters <c>value</c> (USD) and <c>currency</c> ("USD").
+        /// </remarks>
         public static void TROASEvent(string adUnitId, MaxSdkBase.AdInfo adInfo)
         {
             double impressionRevenue = adInfo.Revenue;
@@ -62,6 +77,16 @@ namespace ABILibsSDK
         }
         private const string TROAS_CACHE_KEY_2 = "[ABILibsSDK]troas_cache_2";
         private const string PREFIX_LAST_SEND_EVENT_CACHE_2 = "[ABILibsSDK]last_send_event_cache_2_";
+        /// <summary>
+        /// TROAS ad revenue variant: logs when cumulative revenue since the last fired threshold increases by at least each tier in <c>troasAdEvents2</c>.
+        /// </summary>
+        /// <param name="adUnitId">Ad unit identifier from MAX (reserved; not used in current implementation).</param>
+        /// <param name="adInfo">MAX ad info; revenue and ad format are snapshotted before main-thread work.</param>
+        /// <remarks>
+        /// Banner/MREC handling matches <see cref="TROASEvent"/>.
+        /// For each tier, <c>value</c> is the revenue delta since that tier’s last log; only one matching tier fires per call (first match wins, then loop breaks).
+        /// Event names: <c>baseTROASEventName2</c> + index.
+        /// </remarks>
         public static void TROASEvent2(string adUnitId, MaxSdkBase.AdInfo adInfo)
         {
             double impressionRevenue = adInfo.Revenue;
@@ -113,6 +138,15 @@ namespace ABILibsSDK
         private const string BAMBOO_COUNT_CACHE_KEY = "[ABILibsSDK]bamboo_count_cache";
         private const string PREFIX_CACHE_REVENUE_BAMBOO = "[ABILibsSDK]cache_revenue_bamboo_";
         private const string PREFIX_LAST_SEND_EVENT_CACHE_BAMBOO = "[ABILibsSDK]last_send_event_cache_bamboo_";
+        /// <summary>
+        /// Increments global interstitial (non-rewarded) ad impression count and accumulates revenue for Bamboo-style tiered events.
+        /// </summary>
+        /// <param name="adUnitId">Ad unit identifier from MAX (reserved; not used in current implementation).</param>
+        /// <param name="adInfo">MAX ad info; only <see cref="MaxSdkBase.AdInfo.Revenue"/> is used.</param>
+        /// <remarks>
+        /// When impression count reaches thresholds in <c>bambooCountAdEvents</c>, logs Firebase events
+        /// <c>baseBambooAdEventName</c> + index with <c>value</c> / <c>currency</c> ("USD"). First fire per tier uses accumulated revenue since tracking started for that tier.
+        /// </remarks>
         public static void BambooAdEvent(string adUnitId, MaxSdkBase.AdInfo adInfo)
         {
             double impressionRevenue = adInfo.Revenue;
@@ -150,6 +184,14 @@ namespace ABILibsSDK
         private const string BAMBOO_COUNT_CACHE_KEY_REWARDED = "[ABILibsSDK]bamboo_count_cache_rewarded";
         private const string PREFIX_CACHE_REVENUE_BAMBOO_REWARDED = "[ABILibsSDK]cache_revenue_bamboo_rewarded_";
         private const string PREFIX_LAST_SEND_EVENT_CACHE_BAMBOO_REWARDED = "[ABILibsSDK]last_send_event_cache_bamboo_rewarded_";
+        /// <summary>
+        /// Same pattern as <see cref="BambooAdEvent"/> but uses a separate impression counter and config arrays for rewarded ads.
+        /// </summary>
+        /// <param name="adUnitId">Ad unit identifier from MAX (reserved; not used in current implementation).</param>
+        /// <param name="adInfo">MAX ad info; only revenue is used.</param>
+        /// <remarks>
+        /// Thresholds and event name prefix come from <c>bambooCountRewardedEvents</c> and <c>baseBambooRewardedEventName</c>.
+        /// </remarks>
         public static void BambooRewardedEvent(string adUnitId, MaxSdkBase.AdInfo adInfo)
         {
             double impressionRevenue = adInfo.Revenue;
@@ -187,6 +229,16 @@ namespace ABILibsSDK
         #endregion
 
         #region  Purchase Event
+        /// <summary>
+        /// Logs purchase value in USD to Firebase for TROAS purchase ranges defined in config.
+        /// </summary>
+        /// <param name="productId">Store product identifier (currently not sent to Firebase in this implementation).</param>
+        /// <param name="price">Price in <paramref name="currency"/> units.</param>
+        /// <param name="currency">ISO currency code (must exist in <c>ABILibsCustomEventConfig.exchangeRates</c> JSON for non-USD conversion).</param>
+        /// <remarks>
+        /// Converts <paramref name="price"/> to USD using <c>exchangeRates</c>, finds the first matching range in <c>troasPurchaseEvents</c>,
+        /// then logs <c>logCount</c> events named <c>baseTROASPurchaeEventName</c>, each with <c>value</c> = USD price / <c>logCount</c> and <c>currency</c> "USD".
+        /// </remarks>
         public static void TROASPurchaseEvent(string productId, float price, string currency)
         {
             string currencySnapshot = currency;
@@ -236,6 +288,14 @@ namespace ABILibsSDK
             return result;
         }
         #endregion
+        /// <summary>
+        /// Forwards a generic Firebase Analytics event with string parameters on the main thread.
+        /// </summary>
+        /// <param name="eventName">Firebase event name (must comply with Firebase naming rules).</param>
+        /// <param name="parameters">Key/value pairs; copied immediately so the caller can mutate the original dictionary after this returns.</param>
+        /// <remarks>
+        /// If <paramref name="parameters"/> is <c>null</c>, the event is logged with no parameters (empty array).
+        /// </remarks>
         public static void LogEvent(string eventName, Dictionary<string, string> parameters)
         {
             var snapshot = parameters != null ? new Dictionary<string, string>(parameters) : new Dictionary<string, string>();
